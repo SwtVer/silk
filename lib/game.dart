@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:silk_innovation_swativerma/data.dart';
 import 'package:silk_innovation_swativerma/model.dart';
 
-
 class Game extends StatefulWidget {
   const Game({Key? key}) : super(key: key);
 
@@ -35,7 +34,7 @@ class _GameState extends State<Game> {
           padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 20),
           child: Column(
             children: <Widget>[
-              Text('$points/800'),
+              Text('$points/600'),
               const Text('Point'),
               const SizedBox(
                 height: 20,
@@ -57,7 +56,7 @@ class _GameState extends State<Game> {
   }
 
   void checkGameOver() {
-    if (points >= 800) {
+    if (points >= 600) {
       // Game over condition
       print("Game Over");
       // Navigate to game over screen or perform any other actions
@@ -88,39 +87,43 @@ class _TileState extends State<Tile> {
               String currentImageAssetPath =
                   tileModel.getImageAssetPath() ?? "";
               if (selectedImageAssetPath == currentImageAssetPath) {
+                // Correct match logic remains the same
                 print("correct");
                 Future.delayed(const Duration(seconds: 2), () {
                   setState(() {
                     points += 100;
                     widget.parent!.checkGameOver();
                   });
-                  //setState(() {});
-                  //selected = false;
                   widget.parent!.setState(() {
                     pairs[widget.tileIndex!]
                         .setImageAssetPath("assets/correct.png");
                     pairs[selectedTileIndex!]
                         .setImageAssetPath("assets/correct.png");
                   });
+                  // Clear the selected tile information after correct match
+                  selectedTileIndex = null;
+                  selectedImageAssetPath = null;
                 });
               } else {
+                // Incorrect match logic
                 print("incorrect");
-                //selected = true;
                 Future.delayed(const Duration(seconds: 2), () {
-                  //selected = false;
-                  //setState(() {});
+                  // Flip back only the incorrectly matched tiles
                   widget.parent!.setState(() {
-                    pairs[widget.tileIndex!]
-                        .setImageAssetPath(widget.imageAssetPath!);
-                    pairs[selectedTileIndex!]
-                        .setImageAssetPath(widget.imageAssetPath!);
+                    pairs[widget.tileIndex!].setIsSelected(false);
+                    pairs[selectedTileIndex!].setIsSelected(false);
                   });
+                  // Clear the selected tile information after incorrect match
+                  selectedTileIndex = null;
+                  selectedImageAssetPath = null;
                 });
               }
             } else {
+              // Set the selected tile information
               selectedTileIndex = widget.tileIndex!;
               selectedImageAssetPath = tileModel.getImageAssetPath();
             }
+            // Toggle the selected state of the current tile
             setState(() {
               tileModel.setIsSelected(true);
             });

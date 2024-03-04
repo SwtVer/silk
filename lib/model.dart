@@ -1,7 +1,7 @@
 class TileModel {
   String? imageAssetPath;
   bool? isSelected;
-  TileModel({  this.imageAssetPath,   this.isSelected});
+  TileModel({this.imageAssetPath, this.isSelected});
 
   void setImageAssetPath(String getImageAssetPath) {
     imageAssetPath = getImageAssetPath;
@@ -11,7 +11,7 @@ class TileModel {
     isSelected = getIsSelected;
   }
 
-  String ? getImageAssetPath() {
+  String? getImageAssetPath() {
     return imageAssetPath;
   }
 

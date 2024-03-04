@@ -15,23 +15,9 @@ class LogInScreen extends StatefulWidget {
 
 class _LogInScreenState extends State<LogInScreen> {
   final TextEditingController _phoneController = TextEditingController();
- final  TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   //final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   //String? _phoneNumberError;
-
-  String? _validatePhoneNumber(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your Nepali mobile number';
-    }
-
-    RegExp nepaliMobileRegex =
-        RegExp(r'^98[0-2]\d{7}|^984\d{7}|^985\d{7}|^986\d{7}$');
-
-    if (!nepaliMobileRegex.hasMatch(value)) {
-      return 'Please enter a valid Nepali mobile number';
-    }
-    return null;
-  }
 
   bool _isPasswordType = true;
   void _toggleInputType() {
@@ -123,19 +109,16 @@ class _LogInScreenState extends State<LogInScreen> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  
-    
-    padding:const EdgeInsets.symmetric(horizontal: 20, vertical: 12), 
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8), 
-    ),
-    textStyle: const TextStyle(
-      fontSize: 16, 
-      fontWeight: FontWeight.bold, 
-    ),
-  ),
-                  
-                
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 onPressed: () {
                   _submitForm();
                 },
@@ -148,54 +131,47 @@ class _LogInScreenState extends State<LogInScreen> {
 
   void _submitForm() {
     String phoneNumber = _phoneController.text.trim();
-    String password = _passwordController.text.trim();
+    String credential = _passwordController.text.trim();
+    print(credential);
 
     if (_isValidPhoneNumber(phoneNumber)) {
-      if (_isValidPassword(password) || _isValidPIN(password)) {
-        // Call login API
-        _login(phoneNumber, password);
-      } else {
-        _showError('Invalid password/PIN');
-      }
+      _login(phoneNumber, credential);
     } else {
       _showError('Invalid phone number');
     }
   }
 
- bool _isValidPhoneNumber(String value) {
-  if (value.length != 10) {
+  bool _isValidPhoneNumber(String value) {
+    if (value.length != 10) {
+      return false;
+    }
+
+    if (RegExp(r'^98[456]\d{7}$').hasMatch(value)) {
+      return true;
+    }
+
+    if (value.startsWith('984') || value.startsWith('986')) {
+      return true;
+    } else if (value.startsWith('985')) {
+      return true;
+    } else if (value.startsWith('980') ||
+        value.startsWith('981') ||
+        value.startsWith('982')) {
+      return true;
+    }
+
     return false;
   }
 
-  if (RegExp(r'^98[456]\d{7}$').hasMatch(value)) {
-    return true; 
-  }
-
-  
-  if (value.startsWith('984') || value.startsWith('986')) {
-    return true; 
-  } else if (value.startsWith('985')) {
-    return true; 
-  } else if (value.startsWith('980') ||
-      value.startsWith('981') ||
-      value.startsWith('982')) {
-    return true; 
-  }
-
-  return false;
-}
-
-  
-
   bool _isValidPassword(String value) {
-    return value.isNotEmpty; 
+    return value.isNotEmpty;
   }
 
   bool _isValidPIN(String value) {
-    return RegExp(r'^\d{4}$').hasMatch(value); 
+    return RegExp(r'^\d{4}$').hasMatch(value);
   }
 
-  void _login(String phoneNumber, String password) async {
+  void _login(String phoneNumber, String credential) async {
     String url = 'https://wallet.silkinv.com/api/login';
     Map<String, String> headers = {
       'Content-Type': 'application/json',
@@ -205,44 +181,51 @@ class _LogInScreenState extends State<LogInScreen> {
 
     String requestBody;
     if (_isValidPhoneNumber(phoneNumber)) {
-      requestBody = jsonEncode({
-        'mobile_no': phoneNumber,
-        'pin': password,
-        'fcm_token': 'no_fcm',
-      });
-    } else {
-      requestBody = jsonEncode({
-        'mobile_no': phoneNumber,
-        'password': password,
-        'fcm_token': 'no_fcm',
-      });
-    }
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: headers,
-        body: requestBody,
-      );
-
-      if (response.statusCode == 200) {
-        // Successful login
-        //final responseData = jsonDecode(response.body);
-       // String accessToken = responseData['access_token'];
-        // Store the access token in the device
-        Navigator.push(
-         context,
-        MaterialPageRoute(builder: (context) => Game()),
-    );
+      if (_isValidPIN(credential)) {
+        requestBody = jsonEncode({
+          'mobile_no': phoneNumber,
+          'pin': credential,
+          'fcm_token': 'no_fcm',
+        });
+      } else if (_isValidPassword(credential)) {
+        requestBody = jsonEncode({
+          'mobile_no': phoneNumber,
+          'password': credential,
+          'fcm_token': 'no_fcm',
+        });
       } else {
-        // Handle error response
-        //final errorData = jsonDecode(response.body);
-        //String errorMessage = errorData['message'];
-        // Display error message to the user
+        _showError('Invalid password/PIN');
+        return;
       }
-    } catch (e) {
-      // Handle network errors
-      print('Error: $e');
+
+      try {
+        final response = await http.post(
+          Uri.parse(url),
+          headers: headers,
+          body: requestBody,
+        );
+
+        if (response.statusCode == 200) {
+          // Successful login
+          //final responseData = jsonDecode(response.body);
+          // String accessToken = responseData['access_token'];
+          // Store the access token in the device
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Game()),
+          );
+        } else {
+          // Handle error response
+          //final errorData = jsonDecode(response.body);
+          //String errorMessage = errorData['message'];
+          // Display error message to the user
+        }
+      } catch (e) {
+        // Handle network errors
+        print('Error: $e');
+      }
+    } else {
+      _showError('Invalid phone number');
     }
   }
 
